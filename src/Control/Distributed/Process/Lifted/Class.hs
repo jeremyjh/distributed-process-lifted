@@ -5,6 +5,7 @@ module Control.Distributed.Process.Lifted.Class where
 import           Control.Monad.Reader                                             (ReaderT, mapReaderT)
 import           Control.Monad.State                                              (StateT, mapStateT)
 import qualified Control.Monad.State                                              as State
+import qualified Control.Monad.State.Strict                                       as StateS
 import           Control.Monad.Trans                                              (MonadIO,
                                                                                    lift)
 
@@ -41,6 +42,18 @@ instance MonadProcessBase m => MonadProcessBase (StateT s m) where
     mapProcess f ma =
      do s <- State.get
         flip mapStateT ma $ \ mas ->
+            let stripped = fmap fst mas
+                applied = mapProcess f stripped
+                tack = swap . (,) s
+            in fmap tack applied
+
+instance (Monad m, MonadProcess m) => MonadProcess (StateS.StateT s m) where
+    liftP = lift . liftP
+
+instance MonadProcessBase m => MonadProcessBase (StateS.StateT s m) where
+    mapProcess f ma =
+     do s <- StateS.get
+        flip StateS.mapStateT ma $ \ mas ->
             let stripped = fmap fst mas
                 applied = mapProcess f stripped
                 tack = swap . (,) s

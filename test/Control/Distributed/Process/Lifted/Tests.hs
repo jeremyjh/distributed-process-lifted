@@ -19,7 +19,9 @@ import Control.Concurrent.MVar
   , readMVar
   )
 import Control.Monad (replicateM_, replicateM, forever, void)
-import Control.Monad.Reader (runReaderT, ask)
+import qualified Control.Monad.Reader as R
+import qualified Control.Monad.State.Strict as StS
+import qualified Control.Monad.State.Lazy  as StL
 import Control.Exception (SomeException, throwIO)
 import qualified Control.Exception as Ex (catch)
 import Control.Applicative ((<$>), (<*>), pure, (<|>))
@@ -670,18 +672,62 @@ testSpawnLocal TestTransport{..} = do
 
   takeMVar done
 
+testSpawnLocalStS :: TestTransport -> Assertion
+testSpawnLocalStS TestTransport{..} = do
+  node <- newLocalNode testTransport initRemoteTable
+  done <- newEmptyMVar
+
+  runProcess node $ do
+    flip StS.evalStateT (1234 :: Int) $ do
+        StS.put 5678
+        us <- getSelfPid
+
+        pid <- spawnLocal $ do
+          sport <- expect
+          StL.get >>= sendChan sport
+
+        sport <- spawnChannelLocal $ \rport -> do
+          (5678 :: Int) <- receiveChan rport
+          send us ()
+
+        send pid sport
+        () <- expect
+        liftIO $ putMVar done ()
+
+testSpawnLocalStL :: TestTransport -> Assertion
+testSpawnLocalStL TestTransport{..} = do
+  node <- newLocalNode testTransport initRemoteTable
+  done <- newEmptyMVar
+
+  runProcess node $ do
+    flip StL.evalStateT (1234 :: Int) $ do
+        StL.put 5678
+        us <- getSelfPid
+
+        pid <- spawnLocal $ do
+          sport <- expect
+          StL.get >>= sendChan sport
+
+        sport <- spawnChannelLocal $ \rport -> do
+          (5678 :: Int) <- receiveChan rport
+          send us ()
+
+        send pid sport
+        () <- expect
+        liftIO $ putMVar done ()
+
 testSpawnLocalRT :: TestTransport -> Assertion
 testSpawnLocalRT TestTransport{..} = do
   node <- newLocalNode testTransport initRemoteTable
   done <- newEmptyMVar
 
   runProcess node $ do
-    flip runReaderT (1234 :: Int) $ do
+    flip R.runReaderT (1234 :: Int) $ do
         us <- getSelfPid
 
         pid <- spawnLocal $ do
           sport <- expect
-          ask >>= sendChan sport
+          R.ask >>= sendChan sport
 
         sport <- spawnChannelLocal $ \rport -> do
           (1234 :: Int) <- receiveChan rport
@@ -1283,6 +1329,8 @@ tests :: TestTransport -> IO [Test]
 tests testtrans = return [
       testGroup "Transformer variations" [
         testCase "SpawnLocalReaderT"   (testSpawnLocalRT   testtrans)
+      , testCase "SpawnLocalStateTLazy"   (testSpawnLocalStL   testtrans)
+      , testCase "SpawnLocalStateTStrict"   (testSpawnLocalStS   testtrans)
     ]
 #ifndef ONLY_TEST_TRANSFORMERS
     , testGroup "Regression Basic Features" [
