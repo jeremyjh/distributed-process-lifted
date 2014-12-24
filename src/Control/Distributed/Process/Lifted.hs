@@ -14,7 +14,6 @@ import Control.Distributed.Process
     (Closure
     , DidSpawn(..)
     , DiedReason(..)
-    , Handler(..)
     , Match
     , Message
     , MonitorRef
@@ -78,14 +77,14 @@ import Control.Distributed.Process.Closure (SerializableDict)
 
 import Control.Exception.Lifted
        (bracket, bracket_, catch, catches, Exception, finally
-       ,mask, mask_, onException, try)
+       ,mask, mask_, onException, try, Handler(..))
 import Data.Typeable (Typeable)
 
 -- compose arity 2 functions
 (.:) :: (c->d) -> (a->b->c) -> a->b->d
 f .: i = \l r -> f $ i l r
 
-spawnLocal :: (MonadProcess m) => m () -> m ProcessId
+spawnLocal :: (MonadProcessBase m) => m () -> m ProcessId
 spawnLocal = mapProcess Base.spawnLocal
 
 getSelfPid :: (MonadProcess m) => m ProcessId
@@ -103,7 +102,7 @@ register name = liftP . Base.register name
 whereis :: (MonadProcess m) => String -> m (Maybe ProcessId)
 whereis = liftP . Base.whereis
 
-catchesExit :: MonadProcess m => m b -> [ProcessId -> Message -> Process (Maybe b)] -> m b
+catchesExit :: MonadProcessBase m => m b -> [ProcessId -> Message -> Process (Maybe b)] -> m b
 catchesExit m f = mapProcess (`Base.catchesExit` f) m
 
 
@@ -209,13 +208,13 @@ unregisterRemoteAsync = liftP .: Base.unregisterRemoteAsync
 whereisRemoteAsync :: MonadProcess m => NodeId -> String -> m ()
 whereisRemoteAsync = liftP .: Base.whereisRemoteAsync
 
-withMonitor :: MonadProcess m => ProcessId -> m a -> m a
+withMonitor :: MonadProcessBase m => ProcessId -> m a -> m a
 withMonitor pid = mapProcess $ Base.withMonitor pid
 
 call :: (MonadProcess m, Serializable a) => Static (SerializableDict a) -> NodeId -> Closure (Process a) -> m a
 call s = liftP .: Base.call s
 
-catchExit :: (MonadProcess m, Show a, Serializable a) => m b -> (ProcessId -> a -> Process b) -> m b
+catchExit :: (MonadProcessBase m, Show a, Serializable a) => m b -> (ProcessId -> a -> Process b) -> m b
 catchExit m f = mapProcess (`Base.catchExit` f) m
 
 die :: (MonadProcess m, Serializable a) => a -> m b
