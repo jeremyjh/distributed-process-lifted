@@ -31,3 +31,25 @@ library
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall
+
+test-suite testlifted
+  type:              exitcode-stdio-1.0
+  main-is:           runTCP.hs
+  default-extensions: DeriveDataTypeable, ScopedTypeVariables, RecordWildCards, GeneralizedNewtypeDeriving
+  other-modules:     Control.Distributed.Process.Lifted.Tests
+                   , Network.Transport.Test
+  build-depends:     base >= 4.4 && < 5,
+                     mtl,
+                     network,  
+                     distributed-process,
+                     distributed-process-lifted,
+                     binary, 
+                     network-transport, 
+                     network-transport-tcp,
+                     test-framework >= 0.6 && < 0.9,
+                     test-framework-hunit >= 0.3 && < 0.4,
+                     rematch >= 0.2 && < 0.3,
+                     HUnit
+  ghc-options:       -Wall -debug -eventlog -threaded -rtsopts -with-rtsopts=-N -fno-warn-unused-do-bind
+  hs-source-dirs:    test
+  default-language:    Haskell2010
