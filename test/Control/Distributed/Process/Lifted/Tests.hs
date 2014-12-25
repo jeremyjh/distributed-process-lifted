@@ -1147,6 +1147,23 @@ testCatchesExit TestTransport{..} = do
 
   takeMVar done
 
+testCatchesExitSTL :: TestTransport -> Assertion
+testCatchesExitSTL TestTransport{..} = do
+  localNode <- newLocalNode testTransport initRemoteTable
+  done <- newEmptyMVar
+
+  _ <- forkProcess localNode $ do
+      flip StL.evalStateT ("foobar", 123 :: Int) $ do
+          StL.get >>= die
+          `catchesExit` [
+               (\_ m -> handleMessage m (\(_ :: String) -> return ()))
+             , (\_ m -> handleMessage m (\(_ :: Maybe Int) -> return ()))
+             , (\_ m -> handleMessage m (\(_ :: String, _ :: Int)
+                        -> (liftIO $ putMVar done ()) >> return ()))
+             ]
+
+  takeMVar done
+
 testHandleMessageIf :: TestTransport -> Assertion
 testHandleMessageIf TestTransport{..} = do
   localNode <- newLocalNode testTransport initRemoteTable
@@ -1331,6 +1348,7 @@ tests testtrans = return [
         testCase "SpawnLocalReaderT"   (testSpawnLocalRT   testtrans)
       , testCase "SpawnLocalStateTLazy"   (testSpawnLocalStL   testtrans)
       , testCase "SpawnLocalStateTStrict"   (testSpawnLocalStS   testtrans)
+      , testCase "CatchesExitStateTLazy"   (testCatchesExitSTL testtrans)
     ]
 #ifndef ONLY_TEST_TRANSFORMERS
     , testGroup "Regression Basic Features" [

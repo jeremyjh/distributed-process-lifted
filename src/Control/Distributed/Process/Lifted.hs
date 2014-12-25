@@ -1,4 +1,6 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Control.Distributed.Process.Lifted
     ( module Control.Distributed.Process.Lifted
@@ -74,10 +76,13 @@ import           Control.Distributed.Process.MonadBaseControl                   
 
 import           Control.Distributed.Process.Serializable                         (Serializable)
 import Control.Distributed.Process.Closure (SerializableDict)
+import Control.Distributed.Process.Internal.Types
+       (ProcessExitException(..))
 
 import Control.Exception.Lifted
-       (bracket, bracket_, catch, catches, Exception, finally
-       ,mask, mask_, onException, try, Handler(..))
+       (bracket, bracket_, catch, catches, Exception, finally, mask,
+        mask_, onException, try, Handler(..))
+import qualified Control.Exception.Lifted as EX
 import Data.Typeable (Typeable)
 
 -- compose arity 2 functions
@@ -85,7 +90,7 @@ import Data.Typeable (Typeable)
 f .: i = \l r -> f $ i l r
 
 spawnLocal :: (MonadProcessBase m) => m () -> m ProcessId
-spawnLocal = mapProcess Base.spawnLocal
+spawnLocal = liftBaseDiscardP Base.spawnLocal
 
 getSelfPid :: (MonadProcess m) => m ProcessId
 getSelfPid = liftP Base.getSelfPid
@@ -102,9 +107,25 @@ register name = liftP . Base.register name
 whereis :: (MonadProcess m) => String -> m (Maybe ProcessId)
 whereis = liftP . Base.whereis
 
-catchesExit :: MonadProcessBase m => m b -> [ProcessId -> Message -> Process (Maybe b)] -> m b
-catchesExit m f = mapProcess (`Base.catchesExit` f) m
-
+catchesExit :: forall m b. (MonadProcessBase m) => m b -> [ProcessId -> Message -> m (Maybe b)] -> m b
+-- TODO: This would be better than re-implementing this function, but I am not
+-- smart enough to make it compile yet.
+{-catchesExit ma handlers = controlP $ \runInP ->-}
+                              {-let lifted = map (\handler ->-}
+                                                    {-\pid msg -> runInP $ handler pid msg)-}
+                                               {-handlers-}
+                              {-in Base.catchesExit (runInP ma) lifted-}
+catchesExit act handlers = catch act (`handleExit` handlers)
+  where
+    handleExit :: ProcessExitException
+               -> [ProcessId -> Message -> m (Maybe b)]
+               -> m b
+    handleExit ex [] = EX.throwIO ex
+    handleExit ex@(ProcessExitException from msg) (h:hs) = do
+      r <- h from msg
+      case r of
+        Nothing -> handleExit ex hs
+        Just p  -> return p
 
 delegate :: MonadProcess m => ProcessId -> (Message -> Bool) -> m ()
 delegate = liftP .: Base.delegate
@@ -209,13 +230,16 @@ whereisRemoteAsync :: MonadProcess m => NodeId -> String -> m ()
 whereisRemoteAsync = liftP .: Base.whereisRemoteAsync
 
 withMonitor :: MonadProcessBase m => ProcessId -> m a -> m a
-withMonitor pid = mapProcess $ Base.withMonitor pid
+withMonitor pid ma = controlP $ \runInP ->
+                        Base.withMonitor pid (runInP ma)
 
 call :: (MonadProcess m, Serializable a) => Static (SerializableDict a) -> NodeId -> Closure (Process a) -> m a
 call s = liftP .: Base.call s
 
-catchExit :: (MonadProcessBase m, Show a, Serializable a) => m b -> (ProcessId -> a -> Process b) -> m b
-catchExit m f = mapProcess (`Base.catchExit` f) m
+catchExit :: (MonadProcessBase m, Show a, Serializable a) => m b -> (ProcessId -> a -> m b) -> m b
+catchExit ma handler = controlP $ \runInP ->
+                           Base.catchExit (runInP ma)
+                                          (\pid msg -> runInP $ handler pid msg)
 
 die :: (MonadProcess m, Serializable a) => a -> m b
 die = liftP . Base.die

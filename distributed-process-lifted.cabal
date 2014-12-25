@@ -26,6 +26,7 @@ library
                      , distributed-process-monad-control
                      , lifted-base
                      , transformers
+                     , transformers-base
                      , monad-control
                      , mtl
   hs-source-dirs:      src
