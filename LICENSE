@@ -28,3 +28,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+distributed-process-lifted incorporates code from distributed-process, 
+Copyright Copyright Well-Typed LLP, 2011-2012
+
+distributed-process is distributed under the terms of the BSD3 license.
+
+distributed-process-lifted incorporates code from monad-control, 
+Copyright © 2010, Bas van Dijk, Anders Kaseorg
+
+monad-control is distributed under the terms of the BSD3 license.
