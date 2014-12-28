@@ -22,6 +22,8 @@ import Control.Monad (replicateM_, replicateM, forever, void)
 import qualified Control.Monad.Reader as R
 import qualified Control.Monad.State.Strict as StS
 import qualified Control.Monad.State.Lazy  as StL
+import qualified Control.Monad.RWS as RWST
+import qualified Control.Monad.Trans.Except as EX
 import Control.Exception (SomeException, throwIO)
 import qualified Control.Exception as Ex (catch)
 import Control.Applicative ((<$>), (<*>), pure, (<|>))
@@ -672,6 +674,30 @@ testSpawnLocal TestTransport{..} = do
 
   takeMVar done
 
+testSpawnLocalET :: TestTransport -> Assertion
+testSpawnLocalET TestTransport{..} = do
+  node <- newLocalNode testTransport initRemoteTable
+  done <- newEmptyMVar
+
+  runProcess node $ do
+    Left "ono" <- EX.runExceptT $ do
+        us <- getSelfPid
+
+        pid <- spawnLocal $ do
+          sport <- expect
+          sendChan sport (1234 :: Int)
+
+        sport <- spawnChannelLocal $ \rport -> do
+          (1234 :: Int) <- receiveChan rport
+          send us ()
+
+        EX.throwE "ono"
+
+        send pid sport
+        () <- expect
+        liftIO $ putMVar done ()
+    return ()
+
 testSpawnLocalStS :: TestTransport -> Assertion
 testSpawnLocalStS TestTransport{..} = do
   node <- newLocalNode testTransport initRemoteTable
@@ -1208,6 +1234,25 @@ testMaskRestoreScope TestTransport{..} = do
   child <- liftIO $ takeMVar spawnedPid
   expectThat parent $ isNot $ equalTo child
 
+testDieRWST :: TestTransport -> Assertion
+testDieRWST TestTransport{..} = do
+  localNode <- newLocalNode testTransport initRemoteTable
+  done <- newEmptyMVar
+
+  _ <- forkProcess localNode $ do
+       ((),"hear this") <- flip (`RWST.evalRWST` (123 :: Int)) "bazqux" $ do
+          RWST.put "foobar"
+          s <- RWST.get
+          n <- RWST.ask
+          RWST.tell "hear this"
+          (die (s, n))
+          `catchExit` \_from reason -> do
+             True <- return $ reason == ("foobar", 123 :: Int)
+             liftIO $ putMVar done ()
+       return ()
+
+  takeMVar done
+
 testDie :: TestTransport -> Assertion
 testDie TestTransport{..} = do
   localNode <- newLocalNode testTransport initRemoteTable
@@ -1348,7 +1393,9 @@ tests testtrans = return [
         testCase "SpawnLocalReaderT"   (testSpawnLocalRT   testtrans)
       , testCase "SpawnLocalStateTLazy"   (testSpawnLocalStL   testtrans)
       , testCase "SpawnLocalStateTStrict"   (testSpawnLocalStS   testtrans)
+      , testCase "SpawnLocalExceptT"   (testSpawnLocalET   testtrans)
       , testCase "CatchesExitStateTLazy"   (testCatchesExitSTL testtrans)
+      , testCase "TestDieRWST"   (testDieRWST testtrans)
     ]
 #ifndef ONLY_TEST_TRANSFORMERS
     , testGroup "Regression Basic Features" [

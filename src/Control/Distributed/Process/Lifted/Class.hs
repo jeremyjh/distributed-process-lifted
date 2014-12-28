@@ -2,23 +2,39 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE CPP #-}
 
 module Control.Distributed.Process.Lifted.Class where
 
-import           Control.Monad.Reader                                             (ReaderT)
-import           Control.Monad.State                                              (StateT)
+import Control.Distributed.Process      (Process)
+import           Control.Distributed.Process.MonadBaseControl                     ()
+
 import qualified Control.Monad.State.Strict                                       as StateS
 import           Control.Monad.Trans                                              (MonadIO,
                                                                                    lift)
 
 import           Control.Monad.Trans.Control
-import           Control.Distributed.Process.MonadBaseControl                     ()
 import           Control.Monad.Base (MonadBase(..))
-import Control.Distributed.Process      (Process)
+
+import Data.Monoid ( Monoid )
+
+import Control.Monad.Trans.Identity (IdentityT)
+import Control.Monad.Trans.List (ListT)
+import Control.Monad.Trans.Maybe (MaybeT)
+import Control.Monad.Trans.Reader (ReaderT)
+import Control.Monad.Trans.State (StateT)
+import Control.Monad.Trans.Writer (WriterT)
+import Control.Monad.Trans.RWS (RWST)
+#if MIN_VERSION_transformers(0,4,0)
+import Control.Monad.Trans.Except (ExceptT)
+#endif
+import qualified Control.Monad.Trans.RWS.Strict as Strict (RWST)
+import qualified Control.Monad.Trans.State.Strict as Strict (StateT)
+import qualified Control.Monad.Trans.Writer.Strict as Strict (WriterT)
 
 -- | A class into instances of which Process operations can be lifted;
 -- similar to MonadIO or MonadBase.
-class (MonadIO m, MonadBase IO m, MonadBaseControl IO m) => MonadProcess m where
+class (Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m) => MonadProcess m where
     -- |lift a base 'Process' computation into the current monad
     liftP :: Process a -> m a
 
@@ -74,26 +90,50 @@ instance MonadProcessBase Process where
     liftBaseWithP f = f id
     restoreMP = return
 
-instance (Monad m, MonadProcess m) => MonadProcess (ReaderT r m) where
-    liftP = lift . liftP
+#define LIFTP(T) \
+instance (MonadProcess m) => MonadProcess (T m) where liftP = lift . liftP \
 
-instance MonadProcessBase m => MonadProcessBase (ReaderT r m) where
-    type StMP (ReaderT r m) a = ComposeStP (ReaderT r) m a
-    liftBaseWithP = defaultLiftBaseWithP
-    restoreMP     = defaultRestoreMP
+LIFTP(IdentityT)
+LIFTP(MaybeT)
+LIFTP(ListT)
+LIFTP(ReaderT r)
+LIFTP(Strict.StateT s)
+LIFTP( StateT s)
+#if MIN_VERSION_transformers(0,4,0)
+LIFTP(ExceptT e)
+#endif
 
-instance (Monad m, MonadProcess m) => MonadProcess (StateT s m) where
-    liftP = lift . liftP
+#undef LIFTP
+#define LIFTP(CTX, T) \
+instance (CTX, MonadProcess m) => MonadProcess (T m) where liftP = lift . liftP \
 
-instance MonadProcessBase m => MonadProcessBase (StateT s m) where
-    type StMP (StateT s m) a = ComposeStP (StateT s) m a
-    liftBaseWithP = defaultLiftBaseWithP
-    restoreMP     = defaultRestoreMP
+LIFTP(Monoid w, Strict.WriterT w)
+LIFTP(Monoid w, WriterT w)
+LIFTP(Monoid w, Strict.RWST r w s)
+LIFTP(Monoid w, RWST r w s)
 
-instance (Monad m, MonadProcess m) => MonadProcess (StateS.StateT s m) where
-    liftP = lift . liftP
+#define BODY(T) { \
+    type StMP (T m) a = ComposeStP (T) m a; \
+    liftBaseWithP = defaultLiftBaseWithP; \
+    restoreMP = defaultRestoreMP; \
+    {-# INLINABLE liftBaseWithP #-}; \
+    {-# INLINABLE restoreMP #-}}
 
-instance MonadProcessBase m => MonadProcessBase (StateS.StateT s m) where
-    type StMP (StateS.StateT s m) a = ComposeStP (StateS.StateT s) m a
-    liftBaseWithP = defaultLiftBaseWithP
-    restoreMP     = defaultRestoreMP
+#define TRANS( T) \
+    instance (MonadProcessBase m) => MonadProcessBase (T m) where BODY(T)
+#define TRANS_CTX(CTX, T) \
+    instance (CTX, MonadProcessBase m) => MonadProcessBase (T m) where BODY(T)
+
+TRANS(IdentityT)
+TRANS(MaybeT)
+TRANS(ListT)
+TRANS(ReaderT r)
+TRANS(Strict.StateT s)
+TRANS( StateT s)
+#if MIN_VERSION_transformers(0,4,0)
+TRANS(ExceptT e)
+#endif
+TRANS_CTX(Monoid w, Strict.WriterT w)
+TRANS_CTX(Monoid w, WriterT w)
+TRANS_CTX(Monoid w, Strict.RWST r w s)
+TRANS_CTX(Monoid w, RWST r w s)
