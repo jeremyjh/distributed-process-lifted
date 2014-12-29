@@ -39,11 +39,10 @@ class (Monad m, MonadIO m, MonadBase IO m, MonadBaseControl IO m) => MonadProces
     liftP :: Process a -> m a
 
 -- | A Clone of 'MonadBaseControl' specialized to the Process monad. This
--- uses the MonadTransControl typeclass for transformer default instances, so the
+-- uses the 'MonadTransControl' typeclass for transformer default instances, so the
 -- core wrapping/unwrapping logic is not duplicated. This class
 -- is needed because the MonadBaseControl instance for Process
--- has IO as the base, for interoperability (and because IO is in fact the
--- base monad for Process).
+-- has IO as the base.
 class (MonadProcess m) => MonadProcessBase m where
     type StMP m a :: *
     liftBaseWithP :: (RunInBaseP m -> Process a) -> m a

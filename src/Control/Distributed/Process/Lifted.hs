@@ -13,7 +13,8 @@ import Control.Distributed.Process.Lifted.Class
 
 
 import Control.Distributed.Process
-    (Closure
+    (
+      Closure
     , DidSpawn(..)
     , DiedReason(..)
     , Match
@@ -41,8 +42,6 @@ import Control.Distributed.Process
     , SpawnRef
     , Static
     , WhereIsReply(..)
-    -- | Functions which do not run in Process and thus do not need to
-    -- be lifted.
     , liftIO
     , unsafeWrapMessage
     , wrapMessage
