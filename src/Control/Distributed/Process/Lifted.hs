@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes #-}
+{-# Language RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -275,11 +275,13 @@ withMonitor pid ma = controlP $ \runInP ->
                         Base.withMonitor pid (runInP ma)
 
 -- | Generalized version of 'Base.call'
-call :: (MonadProcess m, Serializable a) => Static (SerializableDict a) -> NodeId -> Closure (Process a) -> m a
+call :: (MonadProcess m,Serializable a)
+     => Static (SerializableDict a) -> NodeId -> Closure (Process a) -> m a
 call s = liftP .: Base.call s
 
 -- | Generalized version of 'Base.catchExit'
-catchExit :: (MonadProcessBase m, Show a, Serializable a) => m b -> (ProcessId -> a -> m b) -> m b
+catchExit :: (MonadProcessBase m,Show a,Serializable a)
+          => m b -> (ProcessId -> a -> m b) -> m b
 catchExit ma handler = controlP $ \runInP ->
                            Base.catchExit (runInP ma)
                                           (\pid msg -> runInP $ handler pid msg)
@@ -293,15 +295,18 @@ exit :: (MonadProcess m, Serializable a) => ProcessId -> a -> m ()
 exit = liftP .: Base.exit
 
 -- | Generalized version of 'Base.handleMessage'
-handleMessage :: (MonadProcess m, Serializable a) => Message -> (a -> Process b) -> m (Maybe b)
+handleMessage :: (MonadProcess m,Serializable a)
+              => Message -> (a -> Process b) -> m (Maybe b)
 handleMessage msg f = liftP $ Base.handleMessage msg f
 
 -- | Generalized version of 'Base.handleMessageIf'
-handleMessageIf :: (MonadProcess m, Serializable a) => Message -> (a -> Bool) -> (a -> Process b) -> m (Maybe b)
+handleMessageIf :: (MonadProcess m,Serializable a)
+                => Message -> (a -> Bool) -> (a -> Process b) -> m (Maybe b)
 handleMessageIf msg p f = liftP $ Base.handleMessageIf msg p f
 
 -- | Generalized version of 'Base.handleMessageIf_'
-handleMessageIf_ :: (MonadProcess m, Serializable a) => Message -> (a -> Bool) -> (a -> Process ()) -> m ()
+handleMessageIf_ :: (MonadProcess m,Serializable a)
+                 => Message -> (a -> Bool) -> (a -> Process ()) -> m ()
 handleMessageIf_ msg p f = liftP $ Base.handleMessageIf_ msg p f
 
 -- | Generalized version of 'Base.handleMessage_'
@@ -309,7 +314,8 @@ handleMessage_ :: (MonadProcess m, Serializable a) => Message -> (a -> Process (
 handleMessage_ msg f = liftP $ Base.handleMessage_ msg f
 
 -- | Generalized version of 'Base.mergePortsBiased'
-mergePortsBiased :: (MonadProcess m, Serializable a) => [ReceivePort a] -> m (ReceivePort a)
+mergePortsBiased :: (MonadProcess m,Serializable a)
+                 => [ReceivePort a] -> m (ReceivePort a)
 mergePortsBiased = liftP . Base.mergePortsBiased
 
 -- | Generalized version of 'Base.mergePortsRR'
@@ -353,11 +359,16 @@ sendChan :: (MonadProcess m, Serializable a) => SendPort a -> a -> m ()
 sendChan = liftP .: Base.sendChan
 
 -- | Generalized version of 'Base.spawnChannel'
-spawnChannel :: (MonadProcess m, Serializable a) => Static (SerializableDict a) -> NodeId -> Closure (ReceivePort a -> Process ()) -> m (SendPort a)
+spawnChannel :: (MonadProcess m,Serializable a)
+             => Static (SerializableDict a)
+             -> NodeId
+             -> Closure (ReceivePort a -> Process ())
+             -> m (SendPort a)
 spawnChannel s = liftP .: Base.spawnChannel s
 
 -- | Generalized version of 'Base.spawnChannelLocal'
-spawnChannelLocal :: (MonadProcess m, Serializable a) => (ReceivePort a -> Process ()) -> m (SendPort a)
+spawnChannelLocal :: (MonadProcess m,Serializable a)
+                  => (ReceivePort a -> Process ()) -> m (SendPort a)
 spawnChannelLocal = liftP . Base.spawnChannelLocal
 
 -- | Generalized version of 'Base.unClosure'
