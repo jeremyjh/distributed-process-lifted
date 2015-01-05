@@ -34,16 +34,19 @@ source-repository head
 library
   exposed-modules:     Control.Distributed.Process.Lifted
                      , Control.Distributed.Process.Lifted.Class
+                     , Control.Distributed.Process.Node.Lifted
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base < 5
                      , distributed-process >= 0.5.1 && < 0.6
                      , distributed-process-monad-control >= 0.5 && < 0.6
+                     , network-transport >= 0.2 && < 0.5
                      , lifted-base  >= 0.2 && < 0.3
                      , transformers >= 0.3 && < 0.5
                      , transformers-base >= 0.4.1 && <= 0.5.0 
                      , monad-control >= 0.3 && < 1.1
                      , mtl >= 2.0 && < 2.3
+                     , deepseq >= 1.2 && < 1.5
   hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall
@@ -62,6 +65,7 @@ test-suite testlifted
                      distributed-process-lifted,
                      binary, 
                      network-transport, 
+                     lifted-base,
                      network-transport-tcp,
                      test-framework >= 0.6 && < 0.9,
                      test-framework-hunit >= 0.3 && < 0.4,

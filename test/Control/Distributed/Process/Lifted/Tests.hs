@@ -11,7 +11,7 @@ import Data.Binary (Binary(..))
 import Data.Typeable (Typeable)
 import Data.Foldable (forM_)
 import Control.Concurrent (forkIO, threadDelay, myThreadId, throwTo, ThreadId)
-import Control.Concurrent.MVar
+import Control.Concurrent.MVar.Lifted
   ( MVar
   , newEmptyMVar
   , putMVar
@@ -24,7 +24,7 @@ import qualified Control.Monad.State.Strict as StS
 import qualified Control.Monad.State.Lazy  as StL
 import qualified Control.Monad.RWS as RWST
 import qualified Control.Monad.Trans.Except as EX
-import Control.Exception (SomeException, throwIO)
+import Control.Exception.Lifted (SomeException, throwIO)
 import qualified Control.Exception as Ex (catch)
 import Control.Applicative ((<$>), (<*>), pure, (<|>))
 import qualified Network.Transport as NT (closeEndPoint)
@@ -35,7 +35,7 @@ import Control.Distributed.Process.Internal.Types
   , ProcessExitException(..)
   , nullProcessId
   )
-import Control.Distributed.Process.Node
+import Control.Distributed.Process.Node.Lifted
 import Control.Distributed.Process.Serializable (Serializable)
 
 import Test.HUnit (Assertion, assertFailure)
@@ -1387,6 +1387,31 @@ testUnsafeSendChan TestTransport{..} = do
 
   takeMVar clientDone
 
+testFromProcess :: TestTransport -> Assertion
+testFromProcess TestTransport{..} = do
+
+  localNode <- newLocalNode testTransport initRemoteTable
+
+  "this" <- fromProcess localNode $ return "this"
+  return ()
+
+testFromProcessException :: TestTransport -> Assertion
+testFromProcessException TestTransport{..} = do
+  done <- newEmptyMVar
+
+  localNode <- newLocalNode testTransport initRemoteTable
+
+  "this" <- fromProcess localNode $ throwIO (userError "fails")
+      `catch` \e ->
+            do ignore e
+               putMVar done ()
+               return "this"
+
+  takeMVar done
+
+ignore :: Monad m => SomeException -> m ()
+ignore = return . const ()
+
 tests :: TestTransport -> IO [Test]
 tests testtrans = return [
       testGroup "Transformer variations" [
@@ -1396,6 +1421,8 @@ tests testtrans = return [
       , testCase "SpawnLocalExceptT"   (testSpawnLocalET   testtrans)
       , testCase "CatchesExitStateTLazy"   (testCatchesExitSTL testtrans)
       , testCase "TestDieRWST"   (testDieRWST testtrans)
+      , testCase "fromProcessReturnsValue"   (testFromProcess testtrans)
+      , testCase "fromProcessRelaysException"   (testFromProcessException testtrans)
     ]
 #ifndef ONLY_TEST_TRANSFORMERS
     , testGroup "Regression Basic Features" [
