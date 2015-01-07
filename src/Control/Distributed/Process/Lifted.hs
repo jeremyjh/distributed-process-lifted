@@ -113,19 +113,14 @@ whereis :: (MonadProcess m) => String -> m (Maybe ProcessId)
 whereis = liftP . Base.whereis
 
 -- | Generalized version of 'Base.catchesExit'
-catchesExit :: forall m b. (MonadProcessBase m) => m b -> [ProcessId -> Message -> m (Maybe b)] -> m b
--- TODO: This would be better than re-implementing this function, but I am not
--- smart enough to make it compile yet.
-{-catchesExit ma handlers = controlP $ \runInP ->-}
-                              {-let lifted = map (\handler ->-}
-                                                    {-\pid msg -> runInP $ handler pid msg)-}
-                                               {-handlers-}
-                              {-in Base.catchesExit (runInP ma) lifted-}
+catchesExit :: forall m a. (MonadProcessBase m) => m a -> [ProcessId -> Message -> m (Maybe a)] -> m a
+-- Had to re-implement due to requirement to preserve structure of Maybe a in
+-- each possible handler.
 catchesExit act handlers = catch act (`handleExit` handlers)
   where
     handleExit :: ProcessExitException
-               -> [ProcessId -> Message -> m (Maybe b)]
-               -> m b
+               -> [ProcessId -> Message -> m (Maybe a)]
+               -> m a
     handleExit ex [] = EX.throwIO ex
     handleExit ex@(ProcessExitException from msg) (h:hs) = do
       r <- h from msg
