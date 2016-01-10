@@ -2,13 +2,13 @@
 -- further documentation, see http://haskell.org/cabal/users-guide/
 
 name:                distributed-process-lifted
-version:             0.0.0.1
+version:             0.1.0.0
 synopsis:            monad-control style typeclass and transformer instances for Process monad.
 
 description:         This package provides typeclasses and functions for lifting functions and control operations (such as spawnLocal) from the @Process@ monad 
                      into transformer stacks based on the Process monad. It uses
                      <http://hackage.haskell.org/package/monad-control-1.0.0.1/docs/Control-Monad-Trans-Control.html#t:MonadTransControl MonadTransControl> 
-                     and a new typeclass 'Control.Distributed.Process.Lifted.Class.MonadProcessBase' which mimics 
+                     and a new typeclass 'Control.Distributed.Process.Lifted.Class.MonadProcessBase' which plays the same role as  
                      <http://hackage.haskell.org/package/monad-control-1.0.0.1/docs/Control-Monad-Trans-Control.html#t:MonadBaseControl MonadBaseControl>.  
                      Instances are provided for all the <http://hackage.haskell.org/package/transformers transformers> types - so stacks based on any of these 
                      (e.g. @ReaderT Config Process a@) can be used seamlessly.
@@ -71,6 +71,6 @@ test-suite testlifted
                      test-framework-hunit >= 0.3 && < 0.4,
                      rematch >= 0.2 && < 0.3,
                      HUnit
-  ghc-options:       -Wall -debug -eventlog -threaded -rtsopts -with-rtsopts=-N -fno-warn-unused-do-bind
+  ghc-options:       -Wall -eventlog -threaded -rtsopts -with-rtsopts=-N -fno-warn-unused-do-bind
   hs-source-dirs:    test
   default-language:    Haskell2010
