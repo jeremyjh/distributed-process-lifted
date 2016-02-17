@@ -25,9 +25,7 @@ import Control.Monad.Trans.Reader (ReaderT)
 import Control.Monad.Trans.State (StateT)
 import Control.Monad.Trans.Writer (WriterT)
 import Control.Monad.Trans.RWS (RWST)
-#if MIN_VERSION_transformers(0,4,0)
 import Control.Monad.Trans.Except (ExceptT)
-#endif
 import qualified Control.Monad.Trans.RWS.Strict as Strict (RWST)
 import qualified Control.Monad.Trans.State.Strict as Strict (StateT)
 import qualified Control.Monad.Trans.Writer.Strict as Strict (WriterT)
@@ -98,9 +96,7 @@ LIFTP(ListT)
 LIFTP(ReaderT r)
 LIFTP(Strict.StateT s)
 LIFTP( StateT s)
-#if MIN_VERSION_transformers(0,4,0)
 LIFTP(ExceptT e)
-#endif
 
 #undef LIFTP
 #define LIFTP(CTX, T) \
@@ -129,9 +125,7 @@ TRANS(ListT)
 TRANS(ReaderT r)
 TRANS(Strict.StateT s)
 TRANS( StateT s)
-#if MIN_VERSION_transformers(0,4,0)
 TRANS(ExceptT e)
-#endif
 TRANS_CTX(Monoid w, Strict.WriterT w)
 TRANS_CTX(Monoid w, WriterT w)
 TRANS_CTX(Monoid w, Strict.RWST r w s)

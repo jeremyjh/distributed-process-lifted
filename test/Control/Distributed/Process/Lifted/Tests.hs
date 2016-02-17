@@ -29,6 +29,7 @@ import qualified Control.Exception as Ex (catch)
 import Control.Applicative ((<$>), (<*>), pure, (<|>))
 import qualified Network.Transport as NT (closeEndPoint)
 import Control.Distributed.Process.Lifted
+import Control.Distributed.Process.Lifted.Extras
 import Control.Distributed.Process.Internal.Types
   (
     LocalNode(localEndPoint)
@@ -765,6 +766,23 @@ testSpawnLocalRT TestTransport{..} = do
 
   takeMVar done
 
+testProcessProxy :: TestTransport -> Assertion
+testProcessProxy TestTransport{..} = do
+  node <- newLocalNode testTransport initRemoteTable
+
+  other <- forkProcess node $ do
+    pid <- expect
+    send pid "hello"
+
+  prox <- spawnProxyIO node
+  inProxy prox $ getSelfPid >>= send other
+  "hello" <- fromProxy prox expect
+  inProxy prox (die "all done")
+  threadDelay 10000
+
+  return ()
+
+
 testReconnect :: TestTransport -> Assertion
 testReconnect TestTransport{..} = do
   [node1, node2] <- replicateM 2 $ newLocalNode testTransport initRemoteTable
@@ -1419,6 +1437,7 @@ tests testtrans = return [
       , testCase "SpawnLocalStateTLazy"   (testSpawnLocalStL   testtrans)
       , testCase "SpawnLocalStateTStrict"   (testSpawnLocalStS   testtrans)
       , testCase "SpawnLocalExceptT"   (testSpawnLocalET   testtrans)
+      , testCase "TestProcessProxy"   (testProcessProxy testtrans)
       , testCase "CatchesExitStateTLazy"   (testCatchesExitSTL testtrans)
       , testCase "TestDieRWST"   (testDieRWST testtrans)
       , testCase "fromProcessReturnsValue"   (testFromProcess testtrans)
