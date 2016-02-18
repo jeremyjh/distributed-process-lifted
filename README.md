@@ -6,6 +6,8 @@ This library uses [MonadTransControl](http://hackage.haskell.org/package/monad-c
                      
 The `Control.Distributed.Process.Lifted` module exports all the same symbols as found in Control.Distributed.Process, but they are all generalized. Where appropriate it re-exports the more general functions from lifted-base (e.g. catch) rather than the versions re-implemented for `Process`.
 
+The [`Control.Distributed.Process.Lifted.Extras`](http://hackage.haskell.org/package/distributed-process-lifted-0.2.0.0/docs/Control-Distributed-Process-Lifted-Extras.html) module provides some useful utilities for working with Cloud Haskell on top of another IO-based monad. 
+
 ##Example
 For a motivation at a glance, consider the following two programs which perform the same function using the same monad stack, the first using lifted functions and the second using the base functions.
 
