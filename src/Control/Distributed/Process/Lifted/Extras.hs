@@ -1,7 +1,7 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE BangPatterns          #-}
+{-# LANGUAGE DeriveDataTypeable    #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 
 
 -- | Utility functions for working with Processes outside of the
@@ -17,18 +17,19 @@ module Control.Distributed.Process.Lifted.Extras
     )
 where
 
-import Control.Monad (void, join, forever)
-import Control.Monad.Base (MonadBase(..))
-import Control.Exception (throw, SomeException)
-import Data.Typeable (Typeable)
+import           Control.Exception                       (SomeException, throw)
+import           Control.Monad                           (forever, join, void)
+import           Control.Monad.Base                      (MonadBase (..))
+import           Data.Typeable                           (Typeable)
 
-import Control.Concurrent.Chan.Lifted
-       (Chan, newChan, writeChan, readChan)
-import Control.Concurrent.MVar.Lifted
-       (newEmptyMVar, putMVar, takeMVar)
+import           Control.Concurrent.Chan.Lifted          (Chan, newChan,
+                                                          readChan, writeChan)
+import           Control.Concurrent.MVar.Lifted          (newEmptyMVar, putMVar,
+                                                          takeMVar)
 
-import Control.Distributed.Process.Lifted hiding (newChan)
-import Control.Distributed.Process.Node.Lifted (LocalNode, forkProcess)
+import           Control.Distributed.Process.Lifted      hiding (newChan)
+import           Control.Distributed.Process.Node.Lifted (LocalNode,
+                                                          forkProcess)
 
 
 -- | A variant of 'Control.Distributed.Process.Node.runProcess' which returns a value. This works just
@@ -38,14 +39,17 @@ import Control.Distributed.Process.Node.Lifted (LocalNode, forkProcess)
 fromProcess :: forall a m. (MonadBase IO m)
             => LocalNode -> Process a -> m a
 fromProcess node ma =
- do resultMV <- newEmptyMVar
-    void . forkProcess node $
-     do eresult <- try (do !a <- ma; return a) :: Process (Either SomeException a)
-        case eresult of
-            Right result -> putMVar resultMV result
-            Left exception -> putMVar resultMV (throw exception)
-    !result <- takeMVar resultMV
-    return result
+  do resultMV <- newEmptyMVar
+     void . forkProcess node $
+       do eresult <- try (do !a <- ma
+                             return a) :: Process (Either SomeException a)
+          case eresult of
+            Right result ->
+              putMVar resultMV result
+            Left exception ->
+              putMVar resultMV (throw exception)
+     !result <- takeMVar resultMV
+     return result
 
 -- | Represents a handle to a process runner that communicates
 -- through a 'Control.Concurrent.Chan.Chan'.
@@ -65,10 +69,10 @@ instance Show ProcessProxy where
 -- | Spawn a new process and return a 'ProcessProxy' handle for it.
 spawnProxy :: Process ProcessProxy
 spawnProxy =
- do action <- newChan
-    pid <- spawnLocal . forever $
-        join (readChan action)
-    return (ProcessProxy pid action)
+  do action <- newChan
+     pid <- spawnLocal . forever $
+            join (readChan action)
+     return (ProcessProxy pid action)
 
 -- | Same as spawnProxy but can be used from any IO
 --
@@ -89,6 +93,6 @@ inProxy = writeChan . proxyChan
 fromProxy :: forall a m. (MonadBase IO m)
           => ProcessProxy -> Process a -> m a
 fromProxy (ProcessProxy _ prox) ma =
- do result <- newEmptyMVar
-    writeChan prox (ma >>= putMVar result)
-    takeMVar result
+  do result <- newEmptyMVar
+     writeChan prox (ma >>= putMVar result)
+     takeMVar result

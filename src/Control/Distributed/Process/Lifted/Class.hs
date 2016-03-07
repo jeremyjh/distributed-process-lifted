@@ -16,7 +16,9 @@ import           Control.Monad.Trans                                            
 import           Control.Monad.Trans.Control
 import           Control.Monad.Base (MonadBase(..))
 
+#if !MIN_VERSION_base(4,8,0)
 import Data.Monoid ( Monoid )
+#endif
 
 import Control.Monad.Trans.Identity (IdentityT)
 import Control.Monad.Trans.List (ListT)

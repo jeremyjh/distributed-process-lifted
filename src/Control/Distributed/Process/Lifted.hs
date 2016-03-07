@@ -1,5 +1,5 @@
-{-# Language RankNTypes #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Control.Distributed.Process.Lifted
@@ -9,80 +9,77 @@ module Control.Distributed.Process.Lifted
     )
 where
 
-import Control.Distributed.Process.Lifted.Class
+import           Control.Distributed.Process.Lifted.Class
 
 
-import Control.Distributed.Process
-    (
-      Closure
-    , DidSpawn(..)
-    , DiedReason(..)
-    , Match
-    , Message
-    , MonitorRef
-    , NodeId(..)
-    , ProcessTerminationException(..)
-    , ProcessRegistrationException(..)
-    , ProcessLinkException(..)
-    , NodeLinkException(..)
-    , PortLinkException(..)
-    , ProcessMonitorNotification(..)
-    , NodeMonitorNotification(..)
-    , PortMonitorNotification(..)
-    , DiedReason(..)
-    , NodeStats(..)
-    , Process
-    , ProcessId
-    , ProcessInfo(..)
-    , ReceivePort
-    , RegisterReply(..)
-    , RemoteTable
-    , SendPort
-    , SendPortId
-    , SpawnRef
-    , Static
-    , WhereIsReply(..)
-    , liftIO
-    , unsafeWrapMessage
-    , wrapMessage
-    , closure
-    , infoLinks
-    , infoMessageQueueLength
-    , infoMonitors
-    , infoNode
-    , infoRegisteredNames
-    , isEncoded
-    , nodeAddress
-    , nodeStatsLinks
-    , nodeStatsMonitors
-    , nodeStatsNode
-    , nodeStatsProcesses
-    , nodeStatsRegisteredNames
-    , processNodeId
-    , sendPortId
-    , sendPortProcessId
-    , match
-    , matchAnyIf
-    , matchIf
-    , matchAny
-    , matchChan
-    , matchMessage
-    , matchMessageIf
-    , matchSTM
-    )
-import qualified Control.Distributed.Process                                      as Base
-import           Control.Distributed.Process.MonadBaseControl                     ()
+import           Control.Distributed.Process                  (Closure,
+                                                               DidSpawn (..),
+                                                               DiedReason (..),
+                                                               DiedReason (..),
+                                                               Match, Message,
+                                                               MonitorRef,
+                                                               NodeId (..),
+                                                               NodeLinkException (..),
+                                                               NodeMonitorNotification (..),
+                                                               NodeStats (..),
+                                                               PortLinkException (..),
+                                                               PortMonitorNotification (..),
+                                                               Process,
+                                                               ProcessId,
+                                                               ProcessInfo (..),
+                                                               ProcessLinkException (..),
+                                                               ProcessMonitorNotification (..),
+                                                               ProcessRegistrationException (..),
+                                                               ProcessTerminationException (..),
+                                                               ReceivePort,
+                                                               RegisterReply (..),
+                                                               RemoteTable,
+                                                               SendPort,
+                                                               SendPortId,
+                                                               SpawnRef, Static,
+                                                               WhereIsReply (..),
+                                                               closure,
+                                                               infoLinks,
+                                                               infoMessageQueueLength,
+                                                               infoMonitors,
+                                                               infoNode,
+                                                               infoRegisteredNames,
+                                                               isEncoded,
+                                                               liftIO, match,
+                                                               matchAny,
+                                                               matchAnyIf,
+                                                               matchChan,
+                                                               matchIf,
+                                                               matchMessage,
+                                                               matchMessageIf,
+                                                               matchSTM,
+                                                               nodeAddress,
+                                                               nodeStatsLinks,
+                                                               nodeStatsMonitors,
+                                                               nodeStatsNode,
+                                                               nodeStatsProcesses,
+                                                               nodeStatsRegisteredNames,
+                                                               processNodeId,
+                                                               sendPortId,
+                                                               sendPortProcessId,
+                                                               unsafeWrapMessage,
+                                                               wrapMessage)
+import qualified Control.Distributed.Process                  as Base
+import           Control.Distributed.Process.MonadBaseControl ()
 
-import           Control.Distributed.Process.Serializable                         (Serializable)
-import Control.Distributed.Process.Closure (SerializableDict)
-import Control.Distributed.Process.Internal.Types
-       (ProcessExitException(..))
+import           Control.Distributed.Process.Closure          (SerializableDict)
+import           Control.Distributed.Process.Internal.Types   (ProcessExitException (..))
+import           Control.Distributed.Process.Serializable     (Serializable)
 
-import Control.Exception.Lifted
-       (bracket, bracket_, catch, catches, Exception, finally, mask,
-        mask_, onException, try, Handler(..))
-import qualified Control.Exception.Lifted as EX
-import Data.Typeable (Typeable)
+import           Control.Exception.Lifted                     (Exception,
+                                                               Handler (..),
+                                                               bracket,
+                                                               bracket_, catch,
+                                                               catches, finally,
+                                                               mask, mask_,
+                                                               onException, try)
+import qualified Control.Exception.Lifted                     as EX
+import           Data.Typeable                                (Typeable)
 
 -- compose arity 2 functions
 (.:) :: (c->d) -> (a->b->c) -> a->b->d
