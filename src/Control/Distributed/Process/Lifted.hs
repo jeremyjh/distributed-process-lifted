@@ -262,9 +262,13 @@ whereisRemoteAsync :: MonadProcess m => NodeId -> String -> m ()
 whereisRemoteAsync = liftP .: Base.whereisRemoteAsync
 
 -- | Generalized version of 'Base.withMonitor'
-withMonitor :: MonadProcessBase m => ProcessId -> m a -> m a
-withMonitor pid ma = controlP $ \runInP ->
-                        Base.withMonitor pid (runInP ma)
+withMonitor :: ProcessId -> (MonitorRef -> Process a) -> Process a
+withMonitor = liftP .: Base.withMonitor
+
+-- | Generalized version of 'Base.withMonitor_'
+withMonitor_ :: MonadProcessBase m => ProcessId -> m a -> m a
+withMonitor_ pid ma = controlP $ \runInP ->
+                        Base.withMonitor_ pid (runInP ma)
 
 -- | Generalized version of 'Base.call'
 call :: (MonadProcess m,Serializable a)
