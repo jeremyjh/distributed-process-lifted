@@ -1,4 +1,5 @@
-##Overview
+## Overview
+
 This Haskell library is intended to ease usage of monad transformer stacks with the Cloud Haskell `distributed-process` library. This package provides typeclasses and functions for lifting functions and control operations (such as `spawnLocal`) from the `Process` monad 
                      into transformer stacks based on the `Process` monad, in very similar way that the `lifted-base` package lifts IO functions into more generalized functions constrained to MonadIO and [MonadBaseControl IO](http://hackage.haskell.org/package/monad-control-1.0.0.1/docs/Control-Monad-Trans-Control.html#t:MonadBaseControl).
 
@@ -8,7 +9,8 @@ The `Control.Distributed.Process.Lifted` module exports all the same symbols as 
 
 The [`Control.Distributed.Process.Lifted.Extras`](http://hackage.haskell.org/package/distributed-process-lifted-0.2.0.0/docs/Control-Distributed-Process-Lifted-Extras.html) module provides some useful utilities for working with Cloud Haskell on top of another IO-based monad. 
 
-##Example
+## Example
+
 For a motivation at a glance, consider the following two programs which perform the same function using the same monad stack, the first using lifted functions and the second using the base functions.
 
 ```haskell
