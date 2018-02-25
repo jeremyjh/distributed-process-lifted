@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE MonoLocalBinds      #-}
 module Control.Distributed.Process.Lifted.Tests (tests) where
 
 #if ! MIN_VERSION_base(4,6,0)

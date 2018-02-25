@@ -5,7 +5,7 @@ module Main where
 import Control.Distributed.Process.Lifted.Tests (tests)
 
 import Network.Transport.Test (TestTransport(..))
-import Network.Socket (sClose)
+import Network.Socket (close)
 import Network.Transport.TCP
   ( createTransportExposeInternals
   , TransportInternals(socketBetween)
@@ -19,12 +19,15 @@ import System.Environment (getArgs)
 main :: IO ()
 main = do
     Right (transport, internals) <-
-      createTransportExposeInternals "127.0.0.1" "8080" defaultTCPParameters
+      createTransportExposeInternals "127.0.0.1"
+                                     "8080"
+                                     (\s -> ("127.0.0.1", s))
+                                     defaultTCPParameters
     ts <- tests TestTransport
       { testTransport = transport
       , testBreakConnection = \addr1 addr2 -> do
           sock <- socketBetween internals addr1 addr2
-          sClose sock
+          close sock
           threadDelay 10000
       }
     args <- getArgs

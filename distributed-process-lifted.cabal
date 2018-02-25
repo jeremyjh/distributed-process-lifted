@@ -2,7 +2,7 @@
 -- further documentation, see http://haskell.org/cabal/users-guide/
 
 name:                distributed-process-lifted
-version:             0.3.0.0
+version:             0.3.0.1
 synopsis:            monad-control style typeclass and transformer instances for Process monad.
 
 description:         This package provides typeclasses and functions for lifting functions and control operations (such as spawnLocal) from the @Process@ monad 
@@ -67,7 +67,7 @@ test-suite testlifted
                      binary, 
                      network-transport, 
                      lifted-base,
-                     network-transport-tcp,
+                     network-transport-tcp >= 0.6 && < 0.7,
                      test-framework >= 0.6 && < 0.9,
                      test-framework-hunit >= 0.3 && < 0.4,
                      rematch >= 0.2 && < 0.3,
